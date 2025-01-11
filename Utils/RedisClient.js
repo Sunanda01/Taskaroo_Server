@@ -1,3 +1,4 @@
+const RedisURL=require('../Config/config').Redis_URL;
 const Redis = require("ioredis");
-const client = new Redis("rediss://default:Ac8EAAIjcDE3MGE3NWRmNzQxMTM0MzRiYTAxOTExNDNmMjgxMDAwM3AxMA@tidy-man-52996.upstash.io:6379");
+const client = new Redis(RedisURL);
 module.exports=client;
