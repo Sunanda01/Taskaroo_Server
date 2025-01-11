@@ -1,4 +1,4 @@
-const { deleteOne } = require('../Model/otpModel');
+
 const todoModel=require('../Model/todoModel');
 const todoController={
     async createTodo(req,res){
@@ -54,7 +54,7 @@ const todoController={
             const {todoId}=req.params;
             const delTodo=await todoModel.findById({_id:todoId});
             if(!delTodo) return res.status(404).json({msg:"ToDO Item Not found"});
-            await todoModel.deleteOne({id});
+            await todoModel.deleteOne({todoId});
             return res.status(200).json({msg:"Deleted Successfully",delTodo});
         }
         catch(err){
