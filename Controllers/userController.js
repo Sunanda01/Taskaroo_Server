@@ -121,7 +121,12 @@ const userController={
           if (!existUser) return res.status(400).json({ msg: "User Not Found" });
                 
           const update = {};
-          if (req.body.password) update.password = req.body.password;
+          if (req.body.password){
+            const password=req.body.password;
+            const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
+            const hashPassword=await bcrypt.hashSync(password,salt);
+            update.password = hashPassword;
+          }
       
           const updatedUser = await User.findByIdAndUpdate(id, update, { new: true });
           return res.status(200).json({ msg: "Password Updated", updatedUser });
@@ -154,6 +159,29 @@ const userController={
         catch(err){
             console.log(err);
             return res.status(400).json({msg:"Failed to delete profile"});
+        }
+    },
+    async forgotPassword(req,res){
+        try{
+            const {email,password}=req.body;
+            if (!email) return res.status(400).json({ msg: "Email is required" });    
+            const user=await User.findOne({email});
+            if(!user) return res.status(404).json({msg:"User Not Found"});
+            if(password){
+                const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
+                const hashPassword=await bcrypt.hashSync(password,salt);
+                user.password=hashPassword;
+                await user.save();
+            }
+            return res.status(200).json({ msg: "Password Updated",
+                name:user.name,
+                email,
+                password:user.password
+             });
+        }
+        catch(err){
+            console.log("Error:", err);
+            return res.status(400).json({ msg: "Password Updation Failed" });
         }
     }
 }

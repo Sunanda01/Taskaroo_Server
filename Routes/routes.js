@@ -11,6 +11,7 @@ routes.get("/getDetails/:userId",userController.getDetails);
 routes.patch("/updateUser/:userId",verifyToken,userController.updateProfile);
 routes.patch("/updatePassword",verifyToken,userController.updatePassword);
 routes.get("/logout",verifyToken,userController.logout);
+routes.patch("/forgetPassword",userController.forgotPassword);
 routes.delete("/deleteProfile",verifyToken,userController.deleteProfile);
 
 //OTP

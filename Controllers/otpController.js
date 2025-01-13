@@ -87,6 +87,7 @@ const otpController={
         return res.status(500).json({ msg: "OTP verification failed" });
       }
     },
+    
 }
 
 module.exports=otpController;
