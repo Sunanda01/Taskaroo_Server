@@ -106,7 +106,7 @@ const userController={
             };
             await client.set(cacheKey, JSON.stringify(details), "EX", 30); // EX=30 means the cache expires in 30 seconds
             console.log("Caching data for user:", userId);
-            return res.status(200).json({success:true,},details);
+            return res.status(200).json({success:true,details});
             } 
             catch (err) {
                 console.error(err); // Debug log
