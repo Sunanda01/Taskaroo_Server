@@ -20,7 +20,7 @@ routes.post("/verifyotp",otpController.verifyOtp);
 
 //ToDo
 routes.post("/createTodo",verifyToken,todoController.createTodo);
-routes.get("/getTodoItems",todoController.getAllTodo);
+routes.get("/getTodoItems",verifyToken,todoController.getAllTodo);
 routes.patch("/updateTodo/:todoId",verifyToken,todoController.updateTodo);
 routes.delete("/deleteTodo/:todoId",verifyToken,todoController.deleteTodo);
 
