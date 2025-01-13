@@ -7,8 +7,8 @@ const verifyToken=require('../Middleware/verifyToken');
 //user
 routes.post("/register",userController.register);
 routes.post("/login",userController.login);
-routes.get("/getDetails/:userId",userController.getDetails);
-routes.patch("/updateUser/:userId",verifyToken,userController.updateProfile);
+routes.get("/getDetails",verifyToken,userController.getDetails);
+routes.patch("/updateUser",verifyToken,userController.updateProfile);
 routes.patch("/updatePassword",verifyToken,userController.updatePassword);
 routes.get("/logout",verifyToken,userController.logout);
 routes.patch("/forgetPassword",userController.forgotPassword);

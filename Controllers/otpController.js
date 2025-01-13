@@ -4,6 +4,7 @@ const otp_generator=require('otp-generator');
 const nodemailer=require('nodemailer');
 const EMAIL_USER=require('../Config/config').EMAIL_USER;
 const EMAIL_PASSWORD=require('../Config/config').EMAIL_PASSWORD;
+const customErrorHandling=require('../Services/customErrorHandling');
 
 const transporter = nodemailer.createTransport({
     host:'smtp.gmail.com',
@@ -21,11 +22,11 @@ const transporter = nodemailer.createTransport({
   }
   
 const otpController={
-    async generateAndSendOtp(req,res){
+    async generateAndSendOtp(req,res,next){
     const {email}=req.body;
     try{
         const user=await User.findOne({email});
-        if(!user) throw new Error('User Not Found');
+        if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
         // const otp = otp_generator.generate(4, { digits: true, upperCase: false, specialChars: false });
         // if(!otp) throw new Error('generated otp is false');
         // const otpNumber=parseInt(otp,10);
@@ -53,29 +54,20 @@ const otpController={
       }
         
     },
-    async verifyOtp(req, res) {
+    async verifyOtp(req, res, next) {
       try {
         const { email, enteredOTP } = req.body;
-  
-        if (!email || !enteredOTP) {
-          return res.status(400).json({ msg: "Email and OTP are required" });
-        }
-  
-        const user = await User.findOne({ email });
-        if (!user) {
-          return res.status(404).json({ msg: "User not found" });
-        }
-  
+        if (!email || !enteredOTP) return res.status(400).json({ msg: "Email and OTP are required" });  
+        const user = await User.findOne({ email }); 
+
+        if (!user) return next(customErrorHandling.userNotExist("User Not Found"));
+
         const otpRecords = await otpModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(1);
         const otpRecord = otpRecords[0];
   
-        if (!otpRecord) {
-          return res.status(404).json({ msg: "No OTP found for this user" });
-        }
+        if (!otpRecord) return res.status(404).json({ msg: "No OTP found for this user" });
   
-        if (otpRecord.otp !== enteredOTP){
-          return res.status(400).json({ msg: "Incorrect OTP" });
-        }
+        if (otpRecord.otp !== enteredOTP) return next(customErrorHandling.invalidOtp("Invalid OTP"));
   
         user.verified = true;
         await user.save();
