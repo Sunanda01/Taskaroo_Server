@@ -13,7 +13,7 @@ const todoController={
             });
             await todo.save();
             console.log(todo);
-            return res.status(200).json({msg:"Todo Added Successfully"});
+            return res.status(200).json({success:true, msg:"Todo Added Successfully"});
         }
         catch(err){
             console.log(err);
@@ -31,7 +31,7 @@ const todoController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({msg:"Unable to fetch Todo Items"});
+            return res.status(400).json({success:true, msg:"Unable to fetch Todo Items"});
         }
     },
     async updateTodo(req,res){
@@ -42,7 +42,7 @@ const todoController={
             if(req.body.description) update.description=req.body.description;
             const updatedTodo=await todoModel.findByIdAndUpdate({_id:todoId},update,{new:true});
             if(!updatedTodo) return res.status(400).json({msg:"Todo Not Found"});
-            return res.status(200).json({msg:"Todo updated Successfully",updatedTodo});
+            return res.status(200).json({success:true, msg:"Todo updated Successfully",updatedTodo});
         }
         catch(err){
             console.log(err);
@@ -55,7 +55,7 @@ const todoController={
             const delTodo=await todoModel.findById({_id:todoId});
             if(!delTodo) return res.status(404).json({msg:"ToDO Item Not found"});
             await todoModel.deleteOne({todoId});
-            return res.status(200).json({msg:"Deleted Successfully",delTodo});
+            return res.status(200).json({success:true, msg:"Deleted Successfully",delTodo});
         }
         catch(err){
             console.log(err);

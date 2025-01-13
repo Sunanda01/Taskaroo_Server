@@ -27,6 +27,7 @@ const userController={
         await newUser.save();
         console.log(newUser);
         return res.status(200).json({
+            success:true,
             msg:"User Created",
             user:{
                 id:newUser._id,
@@ -55,6 +56,7 @@ const userController={
             },jwtHashValue);
             // localStorage.setItem('accessToken',generateToken);
             return res.status(200).json({
+                success:true,
                 msg:"User Login Successfully",
                 user:{
                     id:user._id,
@@ -77,7 +79,7 @@ const userController={
             if(req.body.email) return res.status(400).json({msg:"Email cannot be updated"});
             const updatedUser=await User.findByIdAndUpdate({_id:userId},update,{new:true});
             if(!updatedUser) return res.status(400).json({msg:"User Not Found"});
-            return res.status(200).json({msg:"User Details Updated",updatedUser});
+            return res.status(200).json({success:true,msg:"User Details Updated",updatedUser});
         }
         catch(err){
             console.log(err);
@@ -104,7 +106,7 @@ const userController={
             };
             await client.set(cacheKey, JSON.stringify(details), "EX", 30); // EX=30 means the cache expires in 30 seconds
             console.log("Caching data for user:", userId);
-            return res.status(200).json(details);
+            return res.status(200).json({success:true,},details);
             } 
             catch (err) {
                 console.error(err); // Debug log
@@ -124,12 +126,12 @@ const userController={
           if (req.body.password){
             const password=req.body.password;
             const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
-            const hashPassword=await bcrypt.hashSync(password,salt);
+            const hashPassword=await bcrypt.hash(password,salt);
             update.password = hashPassword;
           }
       
           const updatedUser = await User.findByIdAndUpdate(id, update, { new: true });
-          return res.status(200).json({ msg: "Password Updated", updatedUser });
+          return res.status(200).json({ success:true, msg: "Password Updated", updatedUser });
         } 
         catch (err) {
           console.log("Error:", err);
@@ -139,7 +141,7 @@ const userController={
       
     async logout(req,res){
             try{
-                return res.status(200).json({msg:"Logout Successfully"});
+                return res.status(200).json({success:true, msg:"Logout Successfully"});
             }
             catch(err){
                 console.log(err);
@@ -153,7 +155,7 @@ const userController={
                 return res.status(400).json({ msg: "Invalid User ID" });
             }
             await User.findByIdAndDelete(id);
-            return res.status(200).json({msg:"Profile Deleted"});
+            return res.status(200).json({success:true,msg:"Profile Deleted"});
 
         }
         catch(err){
@@ -169,11 +171,11 @@ const userController={
             if(!user) return res.status(404).json({msg:"User Not Found"});
             if(password){
                 const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
-                const hashPassword=await bcrypt.hashSync(password,salt);
+                const hashPassword=await bcrypt.hash(password,salt);
                 user.password=hashPassword;
                 await user.save();
             }
-            return res.status(200).json({ msg: "Password Updated",
+            return res.status(200).json({ success:true, msg: "Password Updated",
                 name:user.name,
                 email,
                 password:user.password

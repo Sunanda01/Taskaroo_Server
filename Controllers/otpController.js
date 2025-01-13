@@ -45,7 +45,7 @@ const otpController={
           text:`Your OTP is ${otp}. It will expire in 2 minutes!!!`
         };
         await transporter.sendMail(mailOptions);
-        return res.status(200).json({msg:"OTP sent in your mail!!!"});
+        return res.status(200).json({success:true, msg:"OTP sent in your mail!!!"});
       }
       catch(err){
         console.log(err);
@@ -80,7 +80,7 @@ const otpController={
         user.verified = true;
         await user.save();
         await otpModel.deleteMany({userId:user._id});
-        return res.status(200).json({ msg: "OTP verification successful" });
+        return res.status(200).json({success:true, msg: "OTP verification successful" });
       } 
       catch (err) {
         console.error("Error verifying OTP:", err);
