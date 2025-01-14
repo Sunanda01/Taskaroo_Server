@@ -48,7 +48,8 @@ const userController={
         const{email,password}=req.body;
         try{
             const user=await User.findOne({email});
-            if(!user) return res.status(404).json({msg:"User Not Found"});
+            if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
+            if(!user.verified) return next(customErrorHandling.userNotValid("User is not Verified!!!!"));
             const validatePassword=bcrypt.compareSync(password,user.password);
             if(!validatePassword) return res.status(401).json({msg:"Invalid Password"});
             const generateToken=jwt.sign({
@@ -143,8 +144,11 @@ const userController={
         }
       },
       
-    async logout(req,res){
+    async logout(req,res,next){
             try{
+                const userId=req.user.id;
+                const user=await User.findById({_id:userId});
+                if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
                 return res.status(200).json({success:true, msg:"Logout Successfully"});
             }
             catch(err){
