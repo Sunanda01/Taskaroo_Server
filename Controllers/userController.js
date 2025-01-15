@@ -14,7 +14,7 @@ const userController={
             return res.status(400),json({msg:"All fields are compulsary"});
         }
         const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
-        const hashPassword=await bcrypt.hashSync(password,salt);
+        const hashPassword=await bcrypt.hash(password,salt);
         try{
             const existUser=await User.findOne({email});
             if(existUser){
@@ -76,6 +76,7 @@ const userController={
     async updateProfile(req,res,next){
         try{
             // const {userId}=req.params;
+            const userId=req.user.id;
             const user=await User.findById({_id:userId});
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const update={};
@@ -121,21 +122,16 @@ const userController={
     async updatePassword(req, res,next) {
         try {      
           const id = req.user.id;
-          if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ msg: "Invalid User ID" });
-          }
+          const {oldPassword,newPassword}=req.body;
           const existUser = await User.findById(id);
           if (!existUser) return next(customErrorHandling.userNotExist("User Not Found"));
-                
+          const validatePassword=await bcrypt.compare(oldPassword,existUser.password);
+          if(!validatePassword) return next(customErrorHandling.userNotValid("Invalid Password"));
           const update = {};
-          if (req.body.password){
-            const password=req.body.password;
             const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
-            const hashPassword=await bcrypt.hash(password,salt);
+            const hashPassword=await bcrypt.hash(newPassword,salt);
             update.password = hashPassword;
-          }
-      
-          const updatedUser = await User.findByIdAndUpdate(id, update, { new: true });
+            const updatedUser = await User.findByIdAndUpdate(id, update, { new: true });
           return res.status(200).json({ success:true, msg: "Password Updated", updatedUser });
         } 
         catch (err) {
