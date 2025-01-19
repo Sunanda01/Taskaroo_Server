@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const JWT_Hashvalue = require("../Config/config").jwtHashValue;
+const JWT_Hashvalue = require("../Config/config").JWTHASHVALUE;
 
 function verifyToken(req, res, next) {
   // const token=req.cookies.accesstoken

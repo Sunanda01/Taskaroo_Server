@@ -1,8 +1,8 @@
 const User=require('../Model/UserModel');
 const bcrypt=require('bcrypt');
-const bcrypt_SaltLevel=require('../Config/config').bcrypt_SaltLevel;
+const bcrypt_SaltLevel=require('../Config/config').BCRYPT_SALTLEVEL;
 const jwt=require('jsonwebtoken');
-const jwtHashValue=require('../Config/config').jwtHashValue;
+const jwtHashValue=require('../Config/config').JWTHASHVALUE;
 const client=require('../Utils/RedisClient');
 const mongoose = require("mongoose");
 const customErrorHandling=require('../Services/customErrorHandling');
@@ -18,7 +18,7 @@ const userController={
         try{
             const existUser=await User.findOne({email});
             if(existUser){
-                return res.status(400).json({msg:"Email already registered"});
+                return next(customErrorHandling.userExist("Email Already Registered"));
             }
         const newUser=new User({
             name,
@@ -89,7 +89,7 @@ const userController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({msg:"Failed to Update User"});
+            return res.status(400).json({success:false,msg:"Failed to Update User"});
         }
     },
     async getDetails(req, res, next) {
@@ -116,7 +116,7 @@ const userController={
             } 
             catch (err) {
                 console.error(err); // Debug log
-                return res.status(500).json({ msg: "Unable to fetch details" });
+                return res.status(500).json({success:false, msg: "Unable to fetch details" });
             }
     },
     async updatePassword(req, res,next) {
@@ -136,7 +136,7 @@ const userController={
         } 
         catch (err) {
           console.log("Error:", err);
-          return res.status(400).json({ msg: "Password Updation Failed" });
+          return res.status(400).json({success:false, msg: "Password Updation Failed" });
         }
       },
       
@@ -149,7 +149,7 @@ const userController={
             }
             catch(err){
                 console.log(err);
-                return res.status(400).json({msg:"Invalid Token"});
+                return res.status(400).json({success:false,msg:"Invalid Token"});
             }
     },
     async deleteProfile(req,res,next){
@@ -165,7 +165,7 @@ const userController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({msg:"Failed to delete profile"});
+            return res.status(400).json({success:false,msg:"Failed to delete profile"});
         }
     },
     async forgotPassword(req,res){
@@ -185,7 +185,7 @@ const userController={
         }
         catch(err){
             console.log("Error:", err);
-            return res.status(400).json({ msg: "Password Updation Failed" });
+            return res.status(400).json({success:false, msg: "Password Updation Failed" });
         }
     }
 }
