@@ -50,7 +50,7 @@ const otpController={
       }
       catch(err){
         console.log(err);
-        return {success:false, msg:"Error in generating OTP!!"};
+        return next(err);
       }
         
     },
@@ -76,7 +76,7 @@ const otpController={
       } 
       catch (err) {
         console.error("Error verifying OTP:", err);
-        return res.status(500).json({success:false, msg: "OTP verification failed" });
+        return next(err);
       }
     },
     

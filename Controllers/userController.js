@@ -34,7 +34,6 @@ const userController={
                 id:newUser._id,
                 name,
                 email,
-                password:newUser.password
             }
         })
         
@@ -89,7 +88,7 @@ const userController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({success:false,msg:"Failed to Update User"});
+            return next(err);
         }
     },
     async getDetails(req, res, next) {
@@ -116,7 +115,7 @@ const userController={
             } 
             catch (err) {
                 console.error(err); // Debug log
-                return res.status(500).json({success:false, msg: "Unable to fetch details" });
+                return next(err);
             }
     },
     async updatePassword(req, res,next) {
@@ -136,7 +135,7 @@ const userController={
         } 
         catch (err) {
           console.log("Error:", err);
-          return res.status(400).json({success:false, msg: "Password Updation Failed" });
+          return next(err);
         }
       },
       
@@ -149,7 +148,7 @@ const userController={
             }
             catch(err){
                 console.log(err);
-                return res.status(400).json({success:false,msg:"Invalid Token"});
+                return next(err);
             }
     },
     async deleteProfile(req,res,next){
@@ -185,7 +184,7 @@ const userController={
         }
         catch(err){
             console.log("Error:", err);
-            return res.status(400).json({success:false, msg: "Password Updation Failed" });
+            return next(err);
         }
     }
 }

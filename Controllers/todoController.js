@@ -19,7 +19,7 @@ const todoController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({success:false,msg:"Something went wrong!!!"});
+            return next(err);
         }
     },
     async getAllTodo(req,res,next){
@@ -36,7 +36,7 @@ const todoController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({success:false, msg:"Unable to fetch Todo Items"});
+            return next(err);
         }
     },
     async updateTodo(req,res,next){
@@ -54,7 +54,7 @@ const todoController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({success:false,msg:"Failed to Update Todo"});
+            return next(err);
         }
     },
     async deleteTodo(req,res,next){
@@ -70,7 +70,7 @@ const todoController={
         }
         catch(err){
             console.log(err);
-            return res.status(400).json({success:false,msg:"Failed to delete ToDo Items"});
+            return next(err);
         }
     }
 }
