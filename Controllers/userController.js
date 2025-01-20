@@ -2,12 +2,72 @@ const User=require('../Model/UserModel');
 const bcrypt=require('bcrypt');
 const bcrypt_SaltLevel=require('../Config/config').BCRYPT_SALTLEVEL;
 const jwt=require('jsonwebtoken');
-const jwtHashValue=require('../Config/config').JWTHASHVALUE;
+const JWTHASHVALUE=require('../Config/config').JWTHASHVALUE;
+const JWTTOKENEXPIRY=require('../Config/config').JWTTOKENEXPIRY;
+const REFRESHJWTHASHVALUE=require('../Config/config').REFRESHJWTHASHVALUE;
+const JWTREFRESHTOKENEXPIRY=require('../Config/config').JWTREFRESHTOKENEXPIRY;
 const client=require('../Utils/RedisClient');
 const mongoose = require("mongoose");
 const customErrorHandling=require('../Services/customErrorHandling');
+const generateAccessAndRefreshToken=async(userId)=>{
+        const user=await User.findById(userId);
+        if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
+        const accessToken=jwt.sign({
+            name:user.name,
+            id:userId,
+            isVerified:user.validate
+        },JWTHASHVALUE,{expiresIn:JWTTOKENEXPIRY});
 
+        const refreshToken=jwt.sign({
+            id:user._id,
+            
+        },REFRESHJWTHASHVALUE,{expiresIn:JWTREFRESHTOKENEXPIRY});
+
+        user.refreshToken=refreshToken;
+        await user.save();
+        return {accessToken,refreshToken};
+}
 const userController={
+    async refreshAccessToken(req,res,next){
+        try{
+            const incomingRefreshToken=req.cookies.refreshToken;
+            if(!incomingRefreshToken) return next(customErrorHandling.invalidToken("Invalid Token"));
+            const decodedToken=jwt.verify(incomingRefreshToken,REFRESHJWTHASHVALUE);
+            const userId=decodedToken.id;
+            const user=await User.findById(userId);
+            if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
+            if(incomingRefreshToken !== user.refreshToken) return res.status(400).json({success:false,msg:"Invalid Refresh Token"});
+            const options={
+                httpOnly:true,
+                secure:true,
+                maxAge:15*60*1000
+            };
+            const RefreshOptions={
+                httpOnly:true,
+                secure:true,
+                maxAge:30*24*60*60*1000
+            };
+            const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
+            user.refreshToken=refreshToken;
+            await user.save();
+            return res
+            .status(200)
+            .cookie("accessToken",accessToken,options)
+            .cookie("refreshToken",refreshToken,RefreshOptions)
+            .json({
+                success:true,
+                msg:"User Login Successfully",
+                user:{
+                    id:user._id,
+                    name:user.name,
+                    verified:user.verified,
+                    accessToken,
+                    refreshToken
+                }})
+        }catch(err){
+            return next(err);
+        }
+    },
     async register(req,res,next){
         const {name,email,password}=req.body;
         if(!name||!email||!password){
@@ -26,7 +86,6 @@ const userController={
             password:hashPassword
         });
         await newUser.save();
-        console.log(newUser);
         return res.status(200).json({
             success:true,
             msg:"User Created",
@@ -39,7 +98,6 @@ const userController={
         
         }
         catch(err){
-            console.log(err);
             return next(customErrorHandling.userExist("Email Already Registered"));
         }
     },
@@ -51,28 +109,37 @@ const userController={
             if(!user.verified) return next(customErrorHandling.userNotValid("User is not Verified!!!!"));
             const validatePassword=bcrypt.compareSync(password,user.password);
             if(!validatePassword) return res.status(401).json({msg:"Invalid Password"});
-            const generateToken=jwt.sign({
-                name:user.name,
-                id:user._id,
-                isVerified:user.validate
-            },jwtHashValue);
-            // localStorage.setItem('accessToken',generateToken);
-            return res.status(200).json({
+            const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
+            const options={
+                httpOnly:true,
+                secure:true,
+                maxAge:15*60*1000
+            };
+            const RefreshOptions={
+                httpOnly:true,
+                secure:true,
+                maxAge:30*24*60*60*1000
+            };
+            return res
+            .status(200)
+            .cookie("accessToken",accessToken,options)
+            .cookie("refreshToken",refreshToken,RefreshOptions)
+            .json({
                 success:true,
                 msg:"User Login Successfully",
                 user:{
                     id:user._id,
                     name:user.name,
                     verified:user.verified,
-                    accessToken:generateToken
+                    accessToken,
+                    refreshToken
                 }})
         }
         catch(err){
-            console.log(err);
             return next(customErrorHandling.unAuthorisedUser("Unaurthorised User"));
         }
     },
-    async updateProfile(req,res,next){
+    async updateUser(req,res,next){
         try{
             // const {userId}=req.params;
             const userId=req.user.id;
@@ -81,13 +148,13 @@ const userController={
             const update={};
             if(req.body.name) update.name=req.body.name;
             if(req.body.password) update.password=req.body.password;
-            if(req.body.email) return res.status(400).json({msg:"Email cannot be updated"});
             const updatedUser=await User.findByIdAndUpdate({_id:userId},update,{new:true});
             // if(!updatedUser) return res.status(400).json({msg:"User Not Found"});
-            return res.status(200).json({success:true,msg:"User Details Updated",updatedUser});
+            return res.status(200).json({success:true,msg:"User Details Updated",
+                name:updatedUser.name
+            });
         }
         catch(err){
-            console.log(err);
             return next(err);
         }
     },
@@ -98,7 +165,7 @@ const userController={
             let cachedDetails = await client.get(cacheKey);
             if (cachedDetails) 
             {
-                console.log("Returning cached data for user:", userId);
+                // console.log("Returning cached data for user:", userId);
                 return res.status(200).json(JSON.parse(cachedDetails));
             }
                       
@@ -109,12 +176,11 @@ const userController={
                 name: getUser.name,
                 email: getUser.email,
             };
-            await client.set(cacheKey, JSON.stringify(details), "EX", 30); // EX=30 means the cache expires in 30 seconds
-            console.log("Caching data for user:", userId);
+            await client.set(cacheKey, JSON.stringify(details), "EX", 120); // EX=30 means the cache expires in 30 seconds
+            // console.log("Caching data for user:", userId);
             return res.status(200).json({success:true,details});
             } 
             catch (err) {
-                console.error(err); // Debug log
                 return next(err);
             }
     },
@@ -131,23 +197,34 @@ const userController={
             const hashPassword=await bcrypt.hash(newPassword,salt);
             update.password = hashPassword;
             const updatedUser = await User.findByIdAndUpdate(id, update, { new: true });
-          return res.status(200).json({ success:true, msg: "Password Updated", updatedUser });
+          return res.status(200).json({ success:true, msg: "Password Updated", 
+            id:updatedUser._id,
+            name:updatedUser.name,
+            email:updatedUser.email,
+        });
         } 
         catch (err) {
-          console.log("Error:", err);
           return next(err);
         }
       },
       
     async logout(req,res,next){
             try{
+                // console.log(req.user.id);
                 const userId=req.user.id;
-                const user=await User.findById({_id:userId});
+                const user= await User.findByIdAndUpdate(userId,{$set:{refreshToken:undefined}},{new:true});
                 if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
-                return res.status(200).json({success:true, msg:"Logout Successfully"});
+                const options={
+                    httpOnly:true,
+                    secure:true
+                }
+                
+                return res.status(200)
+                .clearCookie("accessToken",options)
+                .clearCookie("refreshToken",options)
+                .json({success:true, msg:"Logout Successfully"});
             }
             catch(err){
-                console.log(err);
                 return next(err);
             }
     },
@@ -163,11 +240,10 @@ const userController={
             return res.status(200).json({success:true,msg:"Profile Deleted"});
         }
         catch(err){
-            console.log(err);
             return res.status(400).json({success:false,msg:"Failed to delete profile"});
         }
     },
-    async forgotPassword(req,res){
+    async forgotPassword(req,res,next){
         try{
             const {email,password}=req.body;
             // if (!email) return res.status(400).json({ msg: "Email is required" });    
@@ -183,7 +259,6 @@ const userController={
              });
         }
         catch(err){
-            console.log("Error:", err);
             return next(err);
         }
     }

@@ -6,7 +6,7 @@ const todoController={
         try{
             const{title,description}=req.body;
             const userId=req.user.id;
-            const user=await User.findById({_id:userId});
+            const user=await User.findById(userId);
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const todo=new todoModel({
                 title,
@@ -14,18 +14,16 @@ const todoController={
                 userId
             });
             await todo.save();
-            console.log(todo);
             return res.status(200).json({success:true, msg:"Todo Added Successfully"});
         }
         catch(err){
-            console.log(err);
             return next(err);
         }
     },
     async getAllTodo(req,res,next){
         try{
             const userId=req.user.id;
-            const user=await User.findById({_id:userId});
+            const user=await User.findById(userId);
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const todoItem=await todoModel.find({userId});
             // const result=todoItem.map(item=>({
@@ -35,14 +33,13 @@ const todoController={
             return res.status(200).json({success:true,todoItem});
         }
         catch(err){
-            console.log(err);
             return next(err);
         }
     },
     async updateTodo(req,res,next){
         try{
             const userId=req.user.id;
-            const user=await User.findById({_id:userId});
+            const user=await User.findById(userId);
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const {todoId}=req.params;
             const update={};
@@ -53,14 +50,13 @@ const todoController={
             return res.status(200).json({success:true, msg:"Todo updated Successfully",updatedTodo});
         }
         catch(err){
-            console.log(err);
             return next(err);
         }
     },
     async deleteTodo(req,res,next){
         try{
             const userId=req.user.id;
-            const user=await User.findById({_id:userId});
+            const user=await User.findById(userId);
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const {todoId}=req.params;
             const delTodo=await todoModel.findById({_id:todoId});
@@ -69,7 +65,6 @@ const todoController={
             return res.status(200).json({success:true, msg:"Deleted Successfully",delTodo});
         }
         catch(err){
-            console.log(err);
             return next(err);
         }
     }

@@ -1,16 +1,15 @@
 const jwt = require("jsonwebtoken");
 const JWT_Hashvalue = require("../Config/config").JWTHASHVALUE;
-
+const customErrorHandling=require('../Services/customErrorHandling');
 function verifyToken(req, res, next) {
   // const token=req.cookies.accesstoken
 
-  const accessToken = req.headers.authorization; // BEARER Token => "bearer dkgoegjeighege154";
-  // console.log(accessToken)
-  if (!accessToken) return res.status(403).json({ msg: "User Unauthorized" });
+  const token =req.cookies?.accessToken||req.headers["authorization"]?.replace("Bearer "," "); // BEARER Token => "bearer dkgoegjeighege154";
+  if (!token) return next(customErrorHandling.userNotValid("Invalid user"));
   else {
-    const token = accessToken.split(" ")[1];
+    // const token = accessToken.split(" ")[1];
     jwt.verify(token, JWT_Hashvalue, function (err, user) {
-      if (err) return res.status(403).json({ msg: "Token Invalid" });
+      if (err) return next(customErrorHandling.invalidToken("Invalid Token"));
       req.user = user;
       next();
     });

@@ -9,5 +9,6 @@ class customErrorHandling extends Error{
     static invalidOtp(message="Invalid OTP") {return new customErrorHandling(400,message);}
     static userNotExist(message="User Not Found") {return new customErrorHandling(404,message);}
     static userNotValid(message="User Not Valid") {return new customErrorHandling(403,message);}
+    static invalidToken(message="Token Not Valid") {return new customErrorHandling(400,message);}
 }
 module.exports=customErrorHandling;
