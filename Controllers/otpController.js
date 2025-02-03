@@ -17,9 +17,9 @@ const transporter = nodemailer.createTransport({
   });
 
   function generateNumericOtp(length) {
-    const otp = Array.from({ length }, () => Math.floor(Math.random() * 10)).join('');
+    const otp = Array.from({ length }, () => Math.floor(Math.random() * 9) + 1).join('');
     return otp;
-  }
+}
   
 const otpController={
     async generateAndSendOtp(req,res,next){
@@ -72,6 +72,7 @@ const otpController={
         user.verified = true;
         await user.save();
         await otpModel.deleteMany({userId:user._id});
+        
         return res.status(200).json({success:true, msg: "OTP verification successful" });
       } 
       catch (err) {

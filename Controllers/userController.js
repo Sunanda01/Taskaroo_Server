@@ -14,6 +14,7 @@ const generateAccessAndRefreshToken=async(userId)=>{
         if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
         const accessToken=jwt.sign({
             name:user.name,
+            email:user.email,
             id:userId,
             isVerified:user.validate
         },JWTHASHVALUE,{expiresIn:JWTTOKENEXPIRY});
@@ -37,22 +38,26 @@ const userController={
             const user=await User.findById(userId);
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             if(incomingRefreshToken !== user.refreshToken) return res.status(400).json({success:false,msg:"Invalid Refresh Token"});
-            const options={
-                httpOnly:true,
-                secure:true,
-                maxAge:15*60*1000
-            };
+            // const options={
+            //     httpOnly:true,
+            //     secure:true,
+            //     maxAge:15*60*1000
+            // };
             const RefreshOptions={
                 httpOnly:true,
                 secure:true,
                 maxAge:30*24*60*60*1000
             };
             const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
-            user.refreshToken=refreshToken;
-            await user.save();
+            // user.refreshToken=refreshToken;
+            // await user.save();
+            await User.findByIdAndUpdate(
+                userId, 
+                { refreshToken: refreshToken },  // Set new refresh token
+              );
             return res
             .status(200)
-            .cookie("accessToken",accessToken,options)
+            // .cookie("accessToken",accessToken,options)
             .cookie("refreshToken",refreshToken,RefreshOptions)
             .json({
                 success:true,
@@ -69,7 +74,7 @@ const userController={
         }
     },
     async register(req,res,next){
-        const {name,email,password}=req.body;
+        const {name,email,password,profileImg}=req.body;
         if(!name||!email||!password){
             return res.status(400),json({msg:"All fields are compulsary"});
         }
@@ -83,7 +88,8 @@ const userController={
         const newUser=new User({
             name,
             email,
-            password:hashPassword
+            password:hashPassword,
+            profileImg
         });
         await newUser.save();
         return res.status(200).json({
@@ -93,6 +99,7 @@ const userController={
                 id:newUser._id,
                 name,
                 email,
+                profileImg,
             }
         })
         
@@ -106,15 +113,15 @@ const userController={
         try{
             const user=await User.findOne({email});
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
-            if(!user.verified) return next(customErrorHandling.userNotValid("User is not Verified!!!!"));
+            // if(!user.verified) return next(customErrorHandling.userNotValid("User is not Verified!!!!"));
             const validatePassword=bcrypt.compareSync(password,user.password);
             if(!validatePassword) return res.status(401).json({msg:"Invalid Password"});
             const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
-            const options={
-                httpOnly:true,
-                secure:true,
-                maxAge:15*60*1000
-            };
+            // const options={
+            //     httpOnly:true,
+            //     secure:true,
+            //     maxAge:15*60*1000
+            // };
             const RefreshOptions={
                 httpOnly:true,
                 secure:true,
@@ -122,7 +129,7 @@ const userController={
             };
             return res
             .status(200)
-            .cookie("accessToken",accessToken,options)
+            // .cookie("accessToken",accessToken,options)
             .cookie("refreshToken",refreshToken,RefreshOptions)
             .json({
                 success:true,
@@ -131,12 +138,11 @@ const userController={
                     id:user._id,
                     name:user.name,
                     verified:user.verified,
-                    accessToken,
-                    refreshToken
+                    accessToken
                 }})
         }
         catch(err){
-            return next(customErrorHandling.unAuthorisedUser("Unaurthorised User"));
+            return next(customErrorHandling.userNotExist("User Not Found"));
         }
     },
     async updateUser(req,res,next){
@@ -175,6 +181,7 @@ const userController={
                 id: getUser._id,
                 name: getUser.name,
                 email: getUser.email,
+                profileImg:getUser.profileImg
             };
             await client.set(cacheKey, JSON.stringify(details), "EX", 120); // EX=30 means the cache expires in 30 seconds
             // console.log("Caching data for user:", userId);
@@ -220,28 +227,13 @@ const userController={
                 }
                 
                 return res.status(200)
-                .clearCookie("accessToken",options)
+                // .clearCookie("accessToken",options)
                 .clearCookie("refreshToken",options)
                 .json({success:true, msg:"Logout Successfully"});
             }
             catch(err){
                 return next(err);
             }
-    },
-    async deleteProfile(req,res,next){
-        try{
-            const id=req.user.id;
-            // if (!mongoose.Types.ObjectId.isValid(id)) {
-            //     return next(customErrorHandling.userNotExist("User Not Found"));
-            // }
-            const user=await User.findById({_id:id});
-            if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
-            await User.findByIdAndDelete(id);
-            return res.status(200).json({success:true,msg:"Profile Deleted"});
-        }
-        catch(err){
-            return res.status(400).json({success:false,msg:"Failed to delete profile"});
-        }
     },
     async forgotPassword(req,res,next){
         try{

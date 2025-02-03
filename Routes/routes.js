@@ -12,7 +12,7 @@ routes.patch("/updateUser",verifyToken,userController.updateUser);
 routes.patch("/updatePassword",verifyToken,userController.updatePassword);
 routes.post("/logout",verifyToken,userController.logout);
 routes.patch("/forgetPassword",userController.forgotPassword);
-routes.delete("/deleteProfile",verifyToken,userController.deleteProfile);
+// routes.delete("/deleteProfile",verifyToken,userController.deleteProfile);
 routes.post("/refreshToken",userController.refreshAccessToken);
 
 //OTP

@@ -5,8 +5,7 @@ const user_Schema = mongoose.Schema({
     email: { type: String, required: true },
     password: { type: String, required: true },
     verified: { type: Boolean, default: false },
-    refreshToken:{type:String},
-    tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'todoModel' }], 
+    refreshToken:{type:String}, 
 },{Timestamp:true});
 
 module.exports = mongoose.model('UserModel', user_Schema);
