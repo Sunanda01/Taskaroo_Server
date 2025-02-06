@@ -61,7 +61,7 @@ const userController={
             .cookie("refreshToken",refreshToken,RefreshOptions)
             .json({
                 success:true,
-                msg:"User Login Successfully",
+                msg:"Token Refreshed",
                 user:{
                     id:user._id,
                     name:user.name,
