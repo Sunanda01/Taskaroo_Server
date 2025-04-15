@@ -1,10 +1,15 @@
 const jwt = require("jsonwebtoken");
 const JWT_Hashvalue = require("../Config/config").JWTHASHVALUE;
-const customErrorHandling=require('../Services/customErrorHandling');
+const customErrorHandling = require("../Services/customErrorHandling");
 function verifyToken(req, res, next) {
   // const token=req.cookies.accesstoken
 
-  const token =req.cookies?.accessToken||req.headers["authorization"]?.replace("Bearer "," "); // BEARER Token => "bearer dkgoegjeighege154";
+  const authHeader = req.headers["authorization"];
+  const token =
+    req.cookies?.accessToken ||
+    (authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null);
   if (!token) return next(customErrorHandling.userNotValid("Invalid user"));
   else {
     // const token = accessToken.split(" ")[1];
@@ -15,4 +20,4 @@ function verifyToken(req, res, next) {
     });
   }
 }
-module.exports=verifyToken;
+module.exports = verifyToken;

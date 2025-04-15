@@ -76,7 +76,7 @@ const userController={
     async register(req,res,next){
         const {name,email,password,profileImg}=req.body;
         if(!name||!email||!password){
-            return res.status(400),json({msg:"All fields are compulsary"});
+            return res.status(400).json({msg:"All fields are compulsary"});
         }
         const salt=await bcrypt.genSalt(Number(bcrypt_SaltLevel));
         const hashPassword=await bcrypt.hash(password,salt);
@@ -137,7 +137,9 @@ const userController={
                 user:{
                     id:user._id,
                     name:user.name,
+                    email:user.email,
                     verified:user.verified,
+                    profileImg:user.profileImg,
                     accessToken
                 }})
         }
@@ -153,7 +155,6 @@ const userController={
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const update={};
             if(req.body.name) update.name=req.body.name;
-            if(req.body.password) update.password=req.body.password;
             const updatedUser=await User.findByIdAndUpdate({_id:userId},update,{new:true});
             // if(!updatedUser) return res.status(400).json({msg:"User Not Found"});
             return res.status(200).json({success:true,msg:"User Details Updated",

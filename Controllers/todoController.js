@@ -14,7 +14,7 @@ const todoController={
                 userId
             });
             await todo.save();
-            return res.status(200).json({success:true, msg:"Todo Added Successfully"});
+            return res.status(200).json({success:true, msg:"Todo Added Successfully",todo});
         }
         catch(err){
             return next(err);
@@ -45,7 +45,7 @@ const todoController={
             const update={};
             if(req.body.title) update.title=req.body.title;
             if(req.body.description) update.description=req.body.description;
-            const updatedTodo=await todoModel.findByIdAndUpdate({_id:todoId},update,{new:true});
+            const updatedTodo=await todoModel.findByIdAndUpdate(todoId,update,{new:true});
             if(!updatedTodo) return res.status(400).json({msg:"Todo Not Found"});
             return res.status(200).json({success:true, msg:"Todo updated Successfully",updatedTodo});
         }
@@ -59,9 +59,10 @@ const todoController={
             const user=await User.findById(userId);
             if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
             const {todoId}=req.params;
-            const delTodo=await todoModel.findById({_id:todoId});
+            const delTodo=await todoModel.findByIdAndDelete(todoId);
             if(!delTodo) return res.status(404).json({msg:"ToDO Item Not found"});
-            await todoModel.deleteOne({todoId});
+            // await todoModel.deleteOne({todoId});
+            await todoModel.save();
             return res.status(200).json({success:true, msg:"Deleted Successfully",delTodo});
         }
         catch(err){
