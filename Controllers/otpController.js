@@ -4,8 +4,32 @@ const otp_generator=require('otp-generator');
 const nodemailer=require('nodemailer');
 const EMAIL_USER=require('../Config/config').EMAIL_USER;
 const EMAIL_PASSWORD=require('../Config/config').EMAIL_PASSWORD;
+const jwt=require('jsonwebtoken');
+const JWTHASHVALUE=require('../Config/config').JWTHASHVALUE;
+const JWTTOKENEXPIRY=require('../Config/config').JWTTOKENEXPIRY;
+const REFRESHJWTHASHVALUE=require('../Config/config').REFRESHJWTHASHVALUE;
+const JWTREFRESHTOKENEXPIRY=require('../Config/config').JWTREFRESHTOKENEXPIRY;
 const customErrorHandling=require('../Services/customErrorHandling');
 
+const generateAccessAndRefreshToken=async(userId)=>{
+        const user=await User.findById(userId);
+        if(!user) return next(customErrorHandling.userNotExist("User Not Found"));
+        const accessToken=jwt.sign({
+            name:user.name,
+            email:user.email,
+            id:userId,
+            isVerified:user.validate
+        },JWTHASHVALUE,{expiresIn:JWTTOKENEXPIRY});
+
+        const refreshToken=jwt.sign({
+            id:user._id,
+            
+        },REFRESHJWTHASHVALUE,{expiresIn:JWTREFRESHTOKENEXPIRY});
+
+        user.refreshToken=refreshToken;
+        await user.save();
+        return {accessToken,refreshToken};
+}
 const transporter = nodemailer.createTransport({
     host:'smtp.gmail.com',
     port:587,
@@ -72,8 +96,15 @@ const otpController={
         user.verified = true;
         await user.save();
         await otpModel.deleteMany({userId:user._id});
+        const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
         
-        return res.status(200).json({success:true, msg: "OTP verification successful" });
+        return res.status(200).json({success:true, msg: "OTP verification successful",accessToken, user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          verified: user.verified,
+          profileImg: user.profileImg,
+        } });
       } 
       catch (err) {
         console.error("Error verifying OTP:", err);

@@ -6,7 +6,7 @@ function verifyToken(req, res, next) {
 
   const authHeader = req.headers["authorization"];
   const token =
-    req.cookies?.accessToken ||
+    
     (authHeader && authHeader.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : null);

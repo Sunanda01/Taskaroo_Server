@@ -62,8 +62,7 @@ const todoController={
             const delTodo=await todoModel.findByIdAndDelete(todoId);
             if(!delTodo) return res.status(404).json({msg:"ToDO Item Not found"});
             // await todoModel.deleteOne({todoId});
-            await todoModel.save();
-            return res.status(200).json({success:true, msg:"Deleted Successfully",delTodo});
+            return res.status(200).json({success:true, msg:"Todo Deleted Successfully",delTodo});
         }
         catch(err){
             return next(err);
