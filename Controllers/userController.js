@@ -156,9 +156,6 @@ const userController = {
       };
       return (
         res
-          .status(200)
-          // .cookie("accessToken",accessToken,options)
-          //   .cookie("refreshToken", refreshToken, RefreshOptions)
           .json({
             success: true,
             msg: "User Login Successfully",
